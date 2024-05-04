@@ -36,3 +36,28 @@ class ClipassoDataset(Dataset):
         img = img.mean(dim=-1)
         img = img / img.max()
         return img, paths_tensor
+    
+    def path2trainImg(path_tensor: torch.Tensor) -> torch.Tensor:
+        svgdict = tensor2SVG(path_tensor)
+        img = renderCLipassoSVG(svgdict["shapes"], svgdict["shape_groups"])
+        img = img.mean(dim=-1)
+        img = img / img.max()
+        return img
+
+
+class pathBatch(Dataset):
+    def __init__(self, 
+                 path_batch: torch.Tensor):
+        # iterate over all files in data_path and make a list of all svg files
+        self.path_batch = path_batch
+
+    def __len__(self):
+        return self.path_batch.shape[0]
+
+    def __getitem__(self, idx: int):
+        path_tensor = self.path_batch[idx]
+        svgdict = tensor2SVG(path_tensor)
+        img = renderCLipassoSVG(svgdict["shapes"], svgdict["shape_groups"])
+        img = img.mean(dim=-1)
+        img = img / img.max()
+        return img

@@ -28,9 +28,9 @@ def decanonizePaths(paths_tensor: torch.Tensor,
     # reshape paths_tensor 
     paths_tensor = paths_tensor.reshape(-1, 2)
     # normalize the paths_tensor
-    paths_tensor = paths_tensor * torch.tensor([center_x, center_y])
+    paths_tensor = paths_tensor * torch.tensor([center_x, center_y]).to(paths_tensor.device)
     # center the paths_tensor
-    paths_tensor = paths_tensor + torch.tensor([center_x, center_y])
+    paths_tensor = paths_tensor + torch.tensor([center_x, center_y]).to(paths_tensor.device)
     return paths_tensor.reshape(-1, num_paths * num_control_points * 2)
 
 def tensor2SVG(paths_tensor: torch.Tensor, 
@@ -111,3 +111,15 @@ def renderCLipassoSVG(shapes: list,
                 None,
                 *scene_args)
     return img
+
+def path2trainImg(path_tensor: torch.Tensor) -> torch.Tensor:
+    batch_size = path_tensor.shape[0]
+    imgs = []
+    for _ in range(batch_size):
+        svgdict = tensor2SVG(path_tensor)
+        img = renderCLipassoSVG(svgdict["shapes"], svgdict["shape_groups"])
+        img = img.mean(dim=-1)
+        img = img / img.max()
+        imgs.append(img)
+    imgs = torch.stack(imgs)
+    return imgs
