@@ -1,0 +1,6 @@
+__pycache__/
+wandb/
+utils/__pycache__/
+U2Net_/saved_models/
+output_folder/
+output_images/
