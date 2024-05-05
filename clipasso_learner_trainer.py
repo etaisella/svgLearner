@@ -166,8 +166,8 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output_path", type=str, default="output_folder", help="Path to save output images and models")
-    parser.add_argument("--learning_rate", type=float, default=0.006, help="Learning rate for training")
-    parser.add_argument("--perceptual_weight", type=float, default=4.0, help="weight of perceptual loss")
+    parser.add_argument("--learning_rate", type=float, default=0.01, help="Learning rate for training")
+    parser.add_argument("--perceptual_weight", type=float, default=2.0, help="weight of perceptual loss")
     parser.add_argument("--epoch_count", type=int, default=10000, help="Number of epochs to train")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training")
     parser.add_argument("--test_frequency", type=int, default=10, help="Frequency of testing during training")
