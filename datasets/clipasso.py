@@ -9,7 +9,7 @@ class ClipassoDataset(Dataset):
                  im_height: int=224, 
                  im_width: int=224, 
                  add_noise: bool=True, 
-                 noise_std: float=10.0):
+                 noise_std: float=7.0):
         # iterate over all files in data_path and make a list of all svg files
         self.svg_paths = []
         self.im_height = im_height
@@ -35,14 +35,14 @@ class ClipassoDataset(Dataset):
         img = renderCLipassoSVG(svgdict["shapes"], svgdict["shape_groups"])
         img = img.mean(dim=-1)
         img = img / img.max()
-        return img, paths_tensor
+        return img.unsqueeze(dim=0), paths_tensor
     
     def path2trainImg(path_tensor: torch.Tensor) -> torch.Tensor:
         svgdict = tensor2SVG(path_tensor)
         img = renderCLipassoSVG(svgdict["shapes"], svgdict["shape_groups"])
         img = img.mean(dim=-1)
         img = img / img.max()
-        return img
+        return img.unsqueeze(dim=0)
 
 
 class pathBatch(Dataset):
@@ -60,4 +60,4 @@ class pathBatch(Dataset):
         img = renderCLipassoSVG(svgdict["shapes"], svgdict["shape_groups"])
         img = img.mean(dim=-1)
         img = img / img.max()
-        return img
+        return img.unsqueeze(dim=0)
