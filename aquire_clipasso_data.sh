@@ -48,7 +48,7 @@ for i in $(seq 1 $num_iterations); do
         # run clipasso script on input image
         # set working directory to the repo directory
         cd /home/etaisella/repos/CLIPasso
-        python /home/etaisella/repos/CLIPasso/run_object_sketching.py --target_file "$image_path" --output_path "$subfolder_path"
+        python /home/etaisella/repos/CLIPasso/run_object_sketching.py --target_file "$image_path" --output_path "$subfolder_path" --num_sketches 1
 
         # delete every file in the output folder except for 'best_iter.jpg', 'best_iter.svg', 'input.png'
         find "$subfolder_path" -type f ! -name 'best_iter.jpg' ! -name 'best_iter.svg' ! -name 'input.png' -delete
