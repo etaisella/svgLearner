@@ -2,10 +2,12 @@ import argparse
 import torch
 import matplotlib.pyplot as plt
 import utils.svgutils
+import utils.imageutils
 import wandb
 import os
 import numpy as np
 from models.mlp import MLP
+from models.vit import VisionTransformer
 from datasets.clipasso import ClipassoDataset, pathBatch
 from torch.utils.data import DataLoader
 
@@ -39,21 +41,25 @@ def visualize_examples(target: torch.Tensor,
 
 def train(args: dict):
     # Load the dataset
-    train_dataset = ClipassoDataset("/home/etaisella/data/256_ObjectCategories_clipasso/train")
+    train_dataset = ClipassoDataset(os.path.join(args.data_path, "train"), noise_std=args.noise_std)
     #train_dataset = ClipassoDataset("/home/etaisella/data/clipasso_test/train")
-    test_dataset = ClipassoDataset("/home/etaisella/data/256_ObjectCategories_clipasso/test")
+    test_dataset = ClipassoDataset(os.path.join(args.data_path, "test"), noise_std=0.0)
     #test_dataset = ClipassoDataset("/home/etaisella/data/clipasso_test/test")
     train_dataloader = DataLoader(train_dataset, args.batch_size, shuffle=True)
     test_dataloader = DataLoader(test_dataset, args.batch_size, shuffle=False)
     print(f"Length of CLipasso Train Dataset: {len(train_dataset)}")
     print(f"Length of CLipasso Test Dataset: {len(test_dataset)}")
 
-    # Create the MLP model
-    model = MLP().to(device)
+    # Create the model
+    if args.vit:
+        model = VisionTransformer().to(device)
+    else:
+        model = MLP().to(device)
 
     # Define the optimizer and loss function
     optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate)
     criterion = torch.nn.MSELoss()
+    boxfilter = utils.imageutils.boxBlurfilter(kernel_size=args.blur_size).to(device)
 
     # set arrays for losses and epochs
     epoch_counter_test = []
@@ -83,7 +89,8 @@ def train(args: dict):
 
             # Compute loss
             direct_loss = criterion(outputs, cpaths)
-            perceptual_loss = criterion(rendered_outputs, images) * args.perceptual_weight
+            perceptual_loss = criterion(boxfilter(rendered_outputs), 
+                                        boxfilter(images)) * args.perceptual_weight
             total_loss_train += (direct_loss.item() + perceptual_loss.item())
             total_direct_loss_train += direct_loss.item()
             total_perceptual_loss_train += perceptual_loss.item()
@@ -123,7 +130,8 @@ def train(args: dict):
 
                     # Compute loss
                     direct_loss = criterion(t_outputs, t_cpaths)
-                    perceptual_loss = criterion(rendered_outputs, t_images) * args.perceptual_weight
+                    perceptual_loss = criterion(boxfilter(rendered_outputs), 
+                                                boxfilter(t_images)) * args.perceptual_weight
                     total_loss_test += (direct_loss.item() + perceptual_loss.item())
                     total_direct_loss_test += direct_loss.item()
                     total_perceptual_loss_test += perceptual_loss.item()
@@ -166,12 +174,16 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output_path", type=str, default="output_folder", help="Path to save output images and models")
-    parser.add_argument("--learning_rate", type=float, default=0.006, help="Learning rate for training")
-    parser.add_argument("--perceptual_weight", type=float, default=4.0, help="weight of perceptual loss")
+    parser.add_argument("-d", "--data_path", type=str, default="/storage/etaisella/data/256_ObjectCategories_clipasso", help="Path to data")
+    parser.add_argument("--learning_rate", type=float, default=0.01, help="Learning rate for training")
+    parser.add_argument("--perceptual_weight", type=float, default=1.5, help="weight of perceptual loss")
     parser.add_argument("--epoch_count", type=int, default=10000, help="Number of epochs to train")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training")
+    parser.add_argument("--batch_size", type=int, default=48, help="Batch size for training")
+    parser.add_argument("--blur_size", type=int, default=13, help="Size of blur kernel")
+    parser.add_argument("--noise_std", type=int, default=7.0, help="Controls amount of noise added to data samples")
     parser.add_argument("--test_frequency", type=int, default=10, help="Frequency of testing during training")
     parser.add_argument("--use_wandb", type=bool, default=True, help="Wether or not to use wandb") # TODO (ES): Change to False before release
+    parser.add_argument("--vit", action="store_true", help="Use Vision Transformer model")
     args = parser.parse_args()
 
     # make output folder if it does not exist

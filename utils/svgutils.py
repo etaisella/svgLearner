@@ -34,7 +34,7 @@ def decanonizePaths(paths_tensor: torch.Tensor,
     return paths_tensor.reshape(-1, num_paths * num_control_points * 2)
 
 def tensor2SVG(paths_tensor: torch.Tensor, 
-               s_width: float=1.5, 
+               s_width: float=3.0, 
                s_color: list=[0.0, 0.0, 0.0, 1.0]) -> dict:
     # reshape the tensor to [dont care, 4, 2]
     paths_tensor = paths_tensor.reshape(-1, 4, 2)
@@ -55,7 +55,8 @@ def tensor2SVG(paths_tensor: torch.Tensor,
         shape_groups.append(path_group)
     return {"shapes": shapes, "shape_groups": shape_groups, "paths_tensor": paths_tensor}
 
-def loadClipassoSVG(svg_path: str) -> dict:
+def loadClipassoSVG(svg_path: str,
+                    s_width: float=3.0) -> dict:
     paths, _ = svgpathtools.svg2paths(svg_path)
     # convert to diffVG format to create new SVG
     shapes=[]
@@ -79,7 +80,7 @@ def loadClipassoSVG(svg_path: str) -> dict:
         paths_tensor.append(path_points)
         diffvg_path = pydiffvg.Path(num_control_points = torch.zeros(1, dtype = torch.int32) + 2,
                                     points = path_points,
-                                    stroke_width = torch.tensor(1.5),
+                                    stroke_width = torch.tensor(s_width),
                                     is_closed = False)
         stroke_color = torch.tensor([0.0, 0.0, 0.0, 1.0])
         shapes.append(diffvg_path)
